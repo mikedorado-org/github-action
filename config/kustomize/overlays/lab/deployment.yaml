@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: actions-example-go
+spec:
+  template:
+    spec:
+      containers:
+        - name: actions-example-go
+          env:
+            - name: REDIS_URL
+              value: redis://four-nines-lab.eastus2.redisenterprise.cache.azure.net:10000

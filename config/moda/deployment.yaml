@@ -1,0 +1,58 @@
+environments:
+  - name: lab
+    cluster_selector:
+      name: actionspoc-1-azure-eastus
+    service_mesh:
+      enabled: true
+    required_builds:
+      - "actions-example-go-docker-image"
+      - "actions-example-go-docker-security"
+      - "actions-example-go-moda-config-bundle"
+  - name: production
+    require_pipeline: true
+    cluster_selector:
+      name: actionspoc-1-azure-eastus
+    required_builds:
+      - "actions-example-go-docker-image"
+      - "actions-example-go-docker-security"
+      - "actions-example-go-moda-config-bundle"
+    service_mesh:
+      enabled: true
+
+notifications:
+  slack_channels:
+    - "#actions-four-nines-ops"
+
+auto_start_pipeline: production_rollout
+
+pipelines:
+  production_rollout:
+    blue_green:
+      enabled: true
+      fast_rollback: false
+    stages:
+    - name: production
+      kind: deployment
+      start_message: We are now going to deploy {{app}}/{{ref}}!
+      config:
+        environment: production
+      gates:
+      - kind: timer
+        duration: 60
+    - name: 100percent
+      kind: traffic_shift
+      start_message: Shifting 100% of traffic
+      config:
+        environment: production
+        percentage: 100
+    # Lab is added as the last stage as a workaround to auto_deploy (see https://github.com/github/heaven/issues/11114#issuecomment-1594575154)
+    - name: lab     
+      kind: deployment
+      ignore_errors: true
+      start_message: We are now going to deploy {{app}}/{{ref}} to lab!
+      config:
+        environment: lab
+        timeout: 300
+      gates:
+        - kind: timer
+          duration: 60

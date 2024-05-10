@@ -1,0 +1,15 @@
+name: Combine PRs
+
+on:
+  schedule:
+    - cron: '0 1 * * 1' # Monday at 01:00
+  workflow_dispatch: # allows you to manually trigger the workflow
+
+jobs:
+  combine-prs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: combine-prs
+        id: combine-prs
+        uses: github/combine-prs@v3.1.1

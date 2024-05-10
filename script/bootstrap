@@ -1,0 +1,8 @@
+#!/bin/bash
+
+## This is an example of a project bootstrap.
+
+set -e
+
+# Must call kupl bootstrap to install common dependencies.
+./kupl bootstrap

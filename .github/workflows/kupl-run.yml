@@ -1,0 +1,30 @@
+# This file is maintained in https://github.com/github/actions-kupl-devex/
+# Changes will be overwritten on update.
+
+name: Deploy to minikube
+on:
+  workflow_call:
+    secrets:
+      GOPROXY_TOKEN:
+        required: false
+      CONTAINER_BUILDER_TOKEN:
+        required: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CONTAINER_BUILDER_TOKEN }}
+      - name: Deploy to minikube
+        run: |
+          ./kupl bootstrap-kupl
+          # by convention, the standalone overlay is for CI deployments with minikube
+          ./kupl server --cache-artifacts=false --profile standalone
+        env:
+          GOPROXY_TOKEN: ${{ secrets.GOPROXY_TOKEN }}
+        shell: bash

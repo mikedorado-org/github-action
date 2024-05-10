@@ -1,0 +1,34 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  merge_group:
+
+permissions:
+  id-token: write  # for setup-goproxy OIDC
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: github/setup-goproxy@v1.0.1
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: unit test
+        run: go test -v ./...
+      - name: lint
+        run: script/lint
+
+  dry-run:
+    needs: test
+    if: ${{ github.event.pull_request }} # build and deploy to minikube on PRs
+    uses: ./.github/workflows/kupl-run.yml
+    secrets:
+      GOPROXY_TOKEN: ${{ secrets.GOPROXY_TOKEN }}
+      CONTAINER_BUILDER_TOKEN: ${{ secrets.CONTAINER_BUILDER_TOKEN }}

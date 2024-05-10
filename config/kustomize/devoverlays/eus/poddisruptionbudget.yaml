@@ -1,0 +1,9 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: actions-example-go
+spec:
+  maxUnavailable: 30%
+  selector:
+    matchLabels:
+      app: actions-example-go

@@ -1,0 +1,36 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "onCreateCommand": "script/bootstrap",
+  "hostRequirements": {
+    "cpus": 8,
+    "memory": "16gb"
+  },
+  "features": {
+    "azure-cli": "latest",
+    "docker-in-docker": "20.10"
+  },
+  "extensions": [
+    "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "golang.go"
+  ],
+  "containerEnv": {
+    "GOPROXY": "https://goproxy.githubapp.com/mod,https://proxy.golang.org,direct",
+    "GOPRIVATE": "",
+    "GONOPROXY": "",
+    "GONOSUMDB": "github.com/github/*"
+  },
+  "customizations": {
+    "codespaces": {
+      "repositories": {
+        "github/*": {
+          "permissions": {
+            "contents": "read",
+            "packages": "read"
+          }
+        }
+      }
+    }
+  }
+}

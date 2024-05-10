@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: actions-example-go
+spec:
+  template:
+    spec:
+      containers:
+        - name: actions-example-go
+          env:
+            - name: KUBE_SITE
+              value: kupl-eastus2
+            - name: OTEL_SERVICE_NAME
+              value: actions-example-go
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://$(HOST_IP):4317" # 4317 for gRPC, 4318 for HTTP
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "env=eus"
+          volumeMounts:
+            - name: settings-volume
+              mountPath: /settings.json
+              subPath: settings.json
+            - name: secrets-store
+              mountPath: "/etc/secrets"
+              readOnly: true
+      volumes:
+        - name: settings-volume
+          configMap:
+            name: settings
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: example-go-kv

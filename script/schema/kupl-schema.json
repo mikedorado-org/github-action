@@ -1,0 +1,85 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "title": "Kupl Configuration",
+    "type": "object",
+    "properties": {
+        "apiVersion": {
+            "description": "Set of YAML files to merge into this one",
+            "type": "string"
+        },
+        "kind": {
+            "description": "Kind of kubernetes resource",
+            "enum": [
+                "Config"
+            ]
+        },
+        "metadata": {
+            "type": "object",
+            "description": "Any metadata",
+            "properties": {
+                "name": {
+                    "description": "Name",
+                    "type": "string"
+                }
+            }
+        },
+        "version": {
+            "description": "Version of kupl",
+            "type": "string"
+        },
+        "istio": {
+            "type": "object",
+            "description": "Configuration of istio",
+            "properties": {
+                "enabled": {
+                    "description": "Whether Istio is enabled",
+                    "type": "boolean"
+                },
+                "config": {
+                    "description": "File path to istioconfig.yaml",
+                    "type": "string"
+                }
+            }
+        },
+        "overlays": {
+            "type": "object",
+            "description": "Configuration of overlays",
+            "properties": {
+                "default": {
+                    "description": "The default overlay",
+                    "type": "string"
+                },
+                "directory": {
+                    "description": "The directory for overlays to be generated in",
+                    "type": "string"
+                }
+            }
+        },
+        "go": {
+            "type": "object",
+            "description": "Configuration of go",
+            "properties": {
+                "proxy": {
+                    "description": "Configuration of go proxy",
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "description": "Whether go proxy is enabled",
+                            "type": "boolean"
+                        }
+                    }
+                }
+            }
+        },
+        "workload-identity": {
+            "type": "object",
+            "description": "Configuration of workload identity",
+            "properties": {
+                "enabled": {
+                    "description": "Whether workload identity is enabled",
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}

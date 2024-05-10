@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: actions-example-go
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: actions-example-go
+  serviceName: actions-example-go
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: actions-example-go
+        topic: go
+    spec:
+      containers:
+        - name: actions-example-go
+          image: actions-example-go
+          env:
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+          resources:
+            requests:
+              memory: 100Mi
+              cpu: 25m
+            limits:
+              memory: 512Mi
+              cpu: 2000m
+          volumeMounts:
+            - name: persistent-storage
+              mountPath: /mnt/disk
+  volumeClaimTemplates:
+    - metadata:
+        name: persistent-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: standard
+        volumeMode: Filesystem

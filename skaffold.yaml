@@ -1,0 +1,13 @@
+apiVersion: skaffold/v2beta28
+kind: Config
+build:
+  local:
+    useBuildkit: true
+  tagPolicy:
+    gitCommit:
+      variant: CommitSha
+  artifacts:
+    - image: actions-example-go
+      docker: { }
+requires:
+  - path: config/kustomize/devoverlays/overlays.yaml

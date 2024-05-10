@@ -1,0 +1,11 @@
+metadata:
+  name: actions-example-go
+istio:
+  enabled: true
+  config: config/istio/istioconfig.yaml
+devoverlays:
+  default: standalone
+  # see https://github.com/github/actions-kupl-devex/blob/main/README.md#private-images-and-imagepullsecrets
+  # this is added for kafka-lite
+  dockerSecrets:
+  - standalone

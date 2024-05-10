@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: actions-example-go
+spec:
+  replicas: 2
+  template:
+    metadata:
+      annotations:
+        # If you emit structured logs, you can specify a parser to use so your logs are parsed
+        # properly and are much nicer to query in splunk. For more details, see
+        # https://thehub.github.com/engineering/development-and-ops/observability/logging/fluent-bit/
+        fluentbit.io/parser: logfmt
+        # Logs go to https://kusto.azure.com/clusters/octokus2.eastus2/databases/Actions -> actions table
+        # Requires GitHub Azure tenant access (the TM-AzDev-Pipelines in https://aka.ms/myaccess)
+        observability.github.com/kafka_topic: launch
+        service-discovery.datadoghq.com/redis.check_names: |
+          ["redisdb"]
+        service-discovery.datadoghq.com/echo-test.init_configs: "[{},{}]"
+        service-discovery.datadoghq.com/echo-test.instances: |
+          [
+            {
+              "name": "redisdb",
+              "host": "%%host%%",
+              "port": "%%port%%",
+              "timeout": "10"
+            }
+          ]
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.0.9
+          args: ["--appendonly", "yes", "--appendfsync", "always"]
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              memory: 256M
+              cpu: 100m
+            limits:
+              memory: 1024M
+        - name: actions-example-go
+          envFrom:
+            - configMapRef:
+                name: kube-cluster-metadata
+          env:
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: DD_DOGSTATSD_PORT
+              value: "28125"
+            - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+              # Ideally we would use `%environment%` and `%region%` instead of `test` and `azure-eastus`, but the environments and regions do not currently match
+              value: https://opentelemetry-collector-production.service.iad.github.net/v1/traces
+            - name: OTEL_EXPORTER_OTLP_TRACES_HEADERS
+              valueFrom:
+                secretKeyRef:
+                  key: OTEL_EXPORTER_OTLP_TRACES_HEADERS
+                  name: vault-secrets
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: REDIS_PASSWORD
+                  name: vault-secrets
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
+          volumeMounts:
+            - name: settings-volume
+              mountPath: /settings.json
+              subPath: settings.json
+            - name: persistent-storage
+              mountPath: /mnt/disk
+      volumes:
+        - name: settings-volume
+          configMap:
+            name: settings
+  volumeClaimTemplates:
+    - metadata:
+        name: persistent-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: standard-ssd-lrs
+        volumeMode: Filesystem

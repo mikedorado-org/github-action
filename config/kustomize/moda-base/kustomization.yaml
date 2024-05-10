@@ -1,0 +1,17 @@
+bases:
+  - "../base"
+
+patchesStrategicMerge:
+  # add moda/production fields
+  - "deployment.yaml"
+  # use loadbalancer w/ moda fields
+  - "service.yaml"
+
+configMapGenerator:
+  - name: settings
+    behavior: create
+    files:
+      - app/settings.json
+
+generatorOptions:
+  disableNameSuffixHash: true

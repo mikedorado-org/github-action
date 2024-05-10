@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: actions-example-go
+  annotations:
+    # https://thehub.github.com/epd/engineering/products-and-services/internal/moda/reference/load-balancer-annotations#modagithubnetdomain-name
+    # For example, this will render to actions-example-go-production.service.azure-eastus.github.net
+    moda.github.net/domain-name: "actions-example-go-%environment%.service.%site%.github.net"
+spec:
+  type: LoadBalancer

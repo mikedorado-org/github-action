@@ -1,0 +1,5 @@
+# Array of rules for conftest to ignore
+# Ignore the invalid config for blue_green because we do want to 
+# deploy to lab, and we don't mind if lab is blue_green too.
+ignored_rules:
+  - 'invalid config for blue_green deployment'

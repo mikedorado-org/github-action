@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:
+  - ../../base
+
+resources:
+  - kafka-lite.yaml
+  - redis.yaml
+  - peerauth.yaml
+  - virtualservice.yaml
+  - namespace.yaml
+  - telemetry.yaml
+
+secretGenerator:
+  - name: examplesecret
+    literals:
+    - ExampleSecret=local value
+  - name: docker-pull-secrets
+    files:
+      - secrets/.dockerconfigjson # This file is wired with `overlays.yaml`
+    type: kubernetes.io/dockerconfigjson
+
+patchesStrategicMerge:
+  - deployment.yaml
+
+namespace: actions-example-go
+
+configMapGenerator:
+  - name: settings
+    behavior: create
+    files:
+      - app/settings.json

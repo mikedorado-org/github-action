@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-lite
+spec:
+  ports:
+    - name: listener-http
+      port: 9092
+      protocol: TCP
+      targetPort: 9092
+    - name: admin-http
+      port: 9094
+      protocol: TCP
+      targetPort: 9094
+  selector:
+    app: kafka-lite
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-lite
+spec:
+  selector:
+    matchLabels:
+      app: kafka-lite
+  template:
+    metadata:
+      labels:
+        app: kafka-lite
+    spec:
+      imagePullSecrets:
+        - name: docker-pull-secrets
+      containers:
+        - image: ghcr.io/github/kafka-lite/kafka-lite:d57494b7fc160569c10a0b63e9943f6e2371a4e1
+          name: kafka-lite
+          command:
+            [
+              "./kafka-lite",
+              "--listen-address",
+              "0.0.0.0:9092",
+              "--advertised-listener-address",
+              "kafka-lite:9092",
+              "--admin-listener",
+              "0.0.0.0:9094"
+            ]
+          ports:
+            - name: listener-http
+              containerPort: 9092
+              protocol: TCP
+            - name: admin-http
+              containerPort: 9094
+              protocol: TCP

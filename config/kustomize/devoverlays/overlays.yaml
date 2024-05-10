@@ -1,0 +1,35 @@
+# This file is generated with 'kupl overlays' command. Do not edit it directly.
+---
+apiVersion: skaffold/v2beta28
+kind: Config
+deploy:
+  kustomize:
+    paths:
+    - standalone
+    hooks:
+      before:
+      - host:
+          command:
+          - ./kupl
+          - overlays
+          - dockersecrets
+          - standalone
+profiles:
+- name: eus
+  deploy:
+    kustomize:
+      paths:
+      - eus
+- name: standalone
+  deploy:
+    kustomize:
+      paths:
+      - standalone
+      hooks:
+        before:
+        - host:
+            command:
+            - ./kupl
+            - overlays
+            - dockersecrets
+            - standalone

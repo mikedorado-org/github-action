@@ -1,0 +1,115 @@
+# This file was generated with Kustomize. Please do not edit manually.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: actions-example-go
+spec:
+    podManagementPolicy: Parallel
+    replicas: 2
+    selector:
+        matchLabels:
+            app: actions-example-go
+    serviceName: actions-example-go
+    template:
+        metadata:
+            annotations:
+                fluentbit.io/parser: logfmt
+                observability.github.com/kafka_topic: launch
+                service-discovery.datadoghq.com/echo-test.init_configs: '[{},{}]'
+                service-discovery.datadoghq.com/echo-test.instances: |
+                    [
+                      {
+                        "name": "redisdb",
+                        "host": "%%host%%",
+                        "port": "%%port%%",
+                        "timeout": "10"
+                      }
+                    ]
+                service-discovery.datadoghq.com/redis.check_names: |
+                    ["redisdb"]
+            labels:
+                app: actions-example-go
+                topic: go
+        spec:
+            containers:
+                - args:
+                    - --appendonly
+                    - "yes"
+                    - --appendfsync
+                    - always
+                  image: redis:7.0.9
+                  name: redis
+                  ports:
+                    - containerPort: 6379
+                  resources:
+                    limits:
+                        memory: 1024M
+                    requests:
+                        cpu: 100m
+                        memory: 256M
+                - env:
+                    - name: DD_AGENT_HOST
+                      valueFrom:
+                        fieldRef:
+                            fieldPath: spec.nodeName
+                    - name: DD_DOGSTATSD_PORT
+                      value: "28125"
+                    - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+                      value: https://opentelemetry-collector-production.service.iad.github.net/v1/traces
+                    - name: OTEL_EXPORTER_OTLP_TRACES_HEADERS
+                      valueFrom:
+                        secretKeyRef:
+                            key: OTEL_EXPORTER_OTLP_TRACES_HEADERS
+                            name: vault-secrets
+                    - name: REDIS_PASSWORD
+                      valueFrom:
+                        secretKeyRef:
+                            key: REDIS_PASSWORD
+                            name: vault-secrets
+                  envFrom:
+                    - configMapRef:
+                        name: kube-cluster-metadata
+                  image: actions-example-go
+                  lifecycle:
+                    preStop:
+                        exec:
+                            command:
+                                - sleep
+                                - "5"
+                  name: actions-example-go
+                  ports:
+                    - containerPort: 8080
+                      name: http
+                      protocol: TCP
+                  readinessProbe:
+                    httpGet:
+                        path: /ready
+                        port: http
+                  resources:
+                    limits:
+                        cpu: 2000m
+                        memory: 512Mi
+                    requests:
+                        cpu: 25m
+                        memory: 100Mi
+                  volumeMounts:
+                    - mountPath: /settings.json
+                      name: settings-volume
+                      subPath: settings.json
+                    - mountPath: /mnt/disk
+                      name: persistent-storage
+            volumes:
+                - configMap:
+                    name: settings
+                  name: settings-volume
+    volumeClaimTemplates:
+        - metadata:
+            name: persistent-storage
+          spec:
+            accessModes:
+                - ReadWriteOnce
+            resources:
+                requests:
+                    storage: 1Gi
+            storageClassName: standard-ssd-lrs
+            volumeMode: Filesystem

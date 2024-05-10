@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: actions-example-go
+spec:
+  template:
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.0.9
+          args: ["--appendonly", "yes", "--appendfsync", "always"]
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              memory: 256M
+              cpu: 100m
+            limits:
+              memory: 1024M
+        - name: actions-example-go
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+              value: "http://$(HOST_IP):4318/traces/otlp/v0.9" # ":4317" for gRPC, "":4318/traces/otlp/v0.9" for HTTP
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "env=dev,service.name=actions-example-go"
+            - name: GITHUB_TELEMETRY_LOGS_INCLUDE_RESOURCE_ATTRIBUTES
+              value: ""  # no extra default attributes (like service.name, service.instance.id, deployment.environment etc)
+            - name: GITHUB_TELEMETRY_LOGS_LEVEL
+              value: "debug"  # debug, info, warn, error, fatal; defaults to info
+            - name: REDIS_URL
+              value: redis://redis-cluster:6379
+          volumeMounts:
+            - name: settings-volume
+              mountPath: /settings.json
+              subPath: settings.json
+            - name: secrets
+              mountPath: "/etc/secrets"
+              readOnly: true
+      volumes:
+        - name: settings-volume
+          configMap:
+            name: settings
+        - name: secrets
+          secret:
+            secretName: examplesecret

@@ -1,0 +1,5 @@
+bases:
+  - "../../moda-base"
+
+patches:
+  - deployment.yaml

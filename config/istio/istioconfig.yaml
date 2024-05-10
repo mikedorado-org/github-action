@@ -1,0 +1,39 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:  
+  meshConfig:
+    accessLogFile: /dev/stdout   ## Enable envoy access logging
+    extensionProviders:
+    - name: otel-tracing         ## enable Lightstep tracing provider
+      opentelemetry:             ## See example https://github.com/istio/istio/tree/master/samples/open-telemetry/tracing
+        service: "lightstep.telemetry.svc.cluster.local"
+        port: 4317
+  profile: demo
+  components:
+    pilot:
+      k8s:
+        resources:
+          requests:
+            cpu: 100m
+    ingressGateways:
+    - name: istio-ingressgateway
+      enabled: true
+      namespace: istio-system
+      k8s:
+        service:
+          type: LoadBalancer
+          ports:
+          - name: http2
+            port: 80
+            targetPort: 80
+            nodePort: 80
+            protocol: TCP
+          - name: https
+            port: 443
+            targetPort: 443
+            nodePort: 443
+            protocol: TCP
+  values:
+    gateways:
+      istio-ingressgateway:
+        runAsRoot: true

@@ -1,0 +1,15 @@
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: actions-example-go
+spec:
+  # no selector specified, applies to all workloads in the namespace
+  tracing:
+    # Any configuration in a Telemetry resource completely overrides configuration of its parent resource in the configuration hierarchy
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 100
+    customTags:
+      'repo.name':         # add the custom tag `repo_name` to spans
+        literal:
+          value: "actions-example-go"
